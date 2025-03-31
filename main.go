@@ -31,6 +31,7 @@ func NewCacheShard() *CacheShard {
 func (cs *CacheShard) Put(key, value string) {
 	cs.Lock()
 	if cs.count >= 700000 {
+		log.Println("Cache is full, removing an item")
 		for k := range cs.items {
 			delete(cs.items, k)
 			cs.count--
@@ -103,11 +104,9 @@ type GetResponse struct {
 var (
 	putSuccessBytes  = []byte(`{"status":"OK","message":"Key inserted/updated successfully."}`)
 	keyNotFoundBytes = []byte(`{"status":"ERROR","message":"Key not found."}`)
-	keyRequiredBytes = []byte(`{"status":"ERROR","message":"Key parameter is required"}`)
 )
 
 var cache *ShardedCache
-var reqCounter uint64
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
 	switch string(ctx.Method()) {
@@ -116,7 +115,7 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 			body := ctx.PostBody()
 			var req PutRequest
 			if err := json.Unmarshal(body, &req); err != nil {
-				ctx.Error("Invalid request body", fasthttp.StatusBadRequest)
+				ctx.Error("Bad request", fasthttp.StatusBadRequest)
 				return
 			}
 			if req.Key == "" {
@@ -141,7 +140,8 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 			}
 			value, found := cache.Get(key)
 			if !found {
-				ctx.Error("Key not found", fasthttp.StatusNotFound)
+				ctx.Response.Header.Set("Content-Type", "application/json")
+				ctx.SetBody(keyNotFoundBytes)
 				return
 			}
 			resp := GetResponse{

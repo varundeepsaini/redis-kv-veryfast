@@ -12,22 +12,34 @@ import (
 
 const (
 	maxKeyValueSize = 256
-	numShards       = 32
+	numShards       = 4
 )
 
 type CacheShard struct {
 	sync.RWMutex
 	items map[string]string
+	count int
 }
 
 func NewCacheShard() *CacheShard {
 	return &CacheShard{
-		items: make(map[string]string, 10000),
+		items: make(map[string]string, 700000),
+		count: 0,
 	}
 }
 
 func (cs *CacheShard) Put(key, value string) {
 	cs.Lock()
+	if cs.count >= 700000 {
+		for k := range cs.items {
+			delete(cs.items, k)
+			cs.count--
+			break
+		}
+	}
+	if _, exists := cs.items[key]; !exists {
+		cs.count++
+	}
 	cs.items[key] = value
 	cs.Unlock()
 }

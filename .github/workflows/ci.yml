@@ -64,3 +64,14 @@ jobs:
         run: |
           ls -la kv-cache
           file kv-cache
+
+      - name: Build Docker image
+        run: docker build -t kv-cache:${{ github.sha }} .
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: kv-cache:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH

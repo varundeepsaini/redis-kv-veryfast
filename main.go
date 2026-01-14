@@ -64,7 +64,7 @@ func NewShardedCache(numShards int) *ShardedCache {
 	}
 	sc := &ShardedCache{
 		shards:    make([]*CacheShard, powerOf2),
-		shardMask: uint64(powerOf2 - 1),
+		shardMask: uint64(powerOf2 - 1), // #nosec G115 -- powerOf2 is always >= 1
 	}
 	for i := 0; i < powerOf2; i++ {
 		sc.shards[i] = NewCacheShard()

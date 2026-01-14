@@ -163,6 +163,7 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func main() {
+	unusedVar := "this will fail linting"
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	cache = NewShardedCache(numShards)
 

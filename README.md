@@ -43,15 +43,13 @@ curl "http://localhost:7171/get?key=name"
 | `make build` | Build the application |
 | `make run` | Build and run locally |
 | `make test` | Run unit tests |
-| `make test-coverage` | Run tests with coverage report |
+| `make test-coverage` | Run tests with coverage |
 | `make lint` | Run golangci-lint |
-| `make security-scan` | Run gosec and govulncheck |
 | `make docker-build` | Build Docker image |
-| `make docker-up` | Start optimized container |
-| `make docker-up-host` | Start with host networking |
+| `make docker-up` | Start container |
 | `make docker-down` | Stop container |
-| `make ci` | Run all CI checks locally |
-| `make help` | Show all commands |
+| `make smoke-test` | Run smoke test |
+| `make clean` | Remove artifacts |
 
 ## CI/CD Pipeline
 
@@ -145,26 +143,9 @@ docker run -d \
 
 ## Performance Optimizations
 
-### Kernel Tuning (Optional)
-
-For maximum performance, apply kernel optimizations:
-
-```bash
-make optimize-kernel
-```
-
-This configures:
-- TCP connection queue and backlog
-- Port reuse and TIME_WAIT handling
-- Memory buffers for high throughput
-- File descriptor limits
-
-### Docker Optimizations
-
-The `docker-up` and `docker-up-host` targets include:
+The `docker-up` target includes optimizations:
 - `--ulimit nofile=1048576:1048576` - High file descriptor limit
-- `--ulimit memlock=-1:-1` - Unlimited memory locking
-- `--network=host` (optional) - Eliminates network overhead
+- `--restart=unless-stopped` - Auto-restart on failure
 
 ## Project Structure
 

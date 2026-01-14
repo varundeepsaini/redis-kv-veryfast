@@ -16,9 +16,9 @@ const (
 )
 
 type CacheShard struct {
-	sync.RWMutex
 	items map[string]string
 	count int
+	sync.RWMutex
 }
 
 func NewCacheShard() *CacheShard {

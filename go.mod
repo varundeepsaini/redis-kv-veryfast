@@ -1,6 +1,6 @@
 module redis-kv-veryfast-c
 
-go 1.23.5
+go 1.24
 
 require github.com/valyala/fasthttp v1.59.0
 

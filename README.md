@@ -1,66 +1,188 @@
-# UltraFastKVCache - High-Performance Key-Value Store
+# UltraFastKVCache
 
-## Overview
-UltraFastKVCache is a high-performance in-memory key-value store built with Golang and fasthttp. It is designed for low-latency, high-throughput workloads with WebSocket communication support.
+High-performance in-memory key-value store built with Go and fasthttp.
 
 ## Features
-- **Sharded Cache**: Uses multiple shards to improve concurrency.
-- **Fast HTTP API**: Powered by `fasthttp` for ultra-low latency.
-- **Optimized Kernel & Docker Settings**: Tuned for high traffic and maximum efficiency.
-- **Efficient Memory Management**: Uses a hash-based approach with controlled eviction.
 
-## Installation & Setup
+- **Sharded Cache**: Multiple shards with RWMutex for high concurrency
+- **Fast HTTP API**: Powered by `fasthttp` for ultra-low latency
+- **Optimized Docker**: Multi-stage build, non-root user, 13.5MB image
+- **CI/CD Pipeline**: Automated testing, security scanning, and deployment
 
-### **Building & Running the Docker Image**
-```sh
-docker build -t ultrafast-kv-cache .
-docker run -p 7171:7171 --ulimit nofile=1048576:1048576 --network=host ultrafast-kv-cache
+## Quick Start
+
+```bash
+# Build and run locally
+make run
+
+# Or with Docker
+make docker-up
+
+# Run with maximum performance (host networking)
+make docker-up-host
 ```
-
-### **Optimized Kernel Parameters**
-To handle high connection loads efficiently, apply these system-level optimizations:
-```sh
-sudo sysctl -w net.core.somaxconn=131072
-sudo sysctl -w net.core.netdev_max_backlog=500000
-sudo sysctl -w net.ipv4.tcp_tw_reuse=1
-sudo sysctl -w net.ipv4.tcp_tw_recycle=1
-sudo sysctl -w net.ipv4.tcp_fin_timeout=10
-sudo sysctl -w net.ipv4.tcp_max_syn_backlog=262144
-sudo sysctl -w net.ipv4.tcp_syncookies=0
-sudo sysctl -w net.ipv4.tcp_mem="786432 1048576 1572864"
-sudo sysctl -w net.ipv4.tcp_rmem="4096 87380 6291456"
-sudo sysctl -w net.ipv4.tcp_wmem="4096 87380 6291456"
-sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-sudo sysctl -w net.ipv4.tcp_fastopen=3
-sudo sysctl -w fs.file-max=2097152
-sudo sysctl -w net.ipv4.tcp_keepalive_time=60
-sudo sysctl -w net.ipv4.tcp_keepalive_intvl=10
-sudo sysctl -w net.ipv4.tcp_keepalive_probes=5
-```
-
-### **Design Choices & Optimizations**
-#### **1. Sharded Cache Design**
-- Uses **consistent hashing (djb2)** to distribute keys across shards.
-- Reduces contention by locking only at the shard level.
-
-#### **2. Kernel-Level Optimizations**
-- **Increased backlog & connection queue**: Prevents dropped requests under heavy traffic.
-- **TCP optimizations**: Reduces `TIME_WAIT` sockets, improves port reuse, and speeds up connections.
-- **Memory tuning**: Optimized TCP buffers for large-scale traffic.
-
-#### **3. Docker Optimizations**
-- **`--ulimit nofile=1048576:1048576`**: Avoids hitting file descriptor limits.
-- **Host networking (`--network=host`)**: Reduces network overhead.
 
 ## API Endpoints
-### **PUT /put**
-Stores a key-value pair.
-```sh
-curl -X POST "http://localhost:7171/put" -H "Content-Type: application/json" -d '{"key":"name", "value":"UltraFastKV"}'
+
+### PUT /put
+```bash
+curl -X POST "http://localhost:7171/put" \
+  -H "Content-Type: application/json" \
+  -d '{"key":"name", "value":"UltraFastKV"}'
 ```
 
-### **GET /get?key={key}**
-Retrieves a value by key.
-```sh
-curl -X GET "http://localhost:7171/get?key=name"
+### GET /get
+```bash
+curl "http://localhost:7171/get?key=name"
 ```
+
+## Makefile Commands
+
+| Command | Description |
+|---------|-------------|
+| `make build` | Build the application |
+| `make run` | Build and run locally |
+| `make test` | Run unit tests |
+| `make test-coverage` | Run tests with coverage report |
+| `make lint` | Run golangci-lint |
+| `make security-scan` | Run gosec and govulncheck |
+| `make docker-build` | Build Docker image |
+| `make docker-up` | Start optimized container |
+| `make docker-up-host` | Start with host networking |
+| `make docker-down` | Stop container |
+| `make ci` | Run all CI checks locally |
+| `make help` | Show all commands |
+
+## CI/CD Pipeline
+
+### Pipeline Architecture
+
+```
+┌─────────────────────────────────────────┐
+│           CI - Build & Test             │
+├─────────────────────────────────────────┤
+│ • Checkout code                         │
+│ • Setup Go 1.24                         │
+│ • Lint (golangci-lint)                  │
+│ • SAST (gosec)                          │
+│ • SCA (govulncheck)                     │
+│ • Unit Tests (75%+ coverage)            │
+│ • Build binary                          │
+└──────────────────┬──────────────────────┘
+                   │ depends on CI
+                   ▼
+┌─────────────────────────────────────────┐
+│          CD - Docker & Deploy           │
+├─────────────────────────────────────────┤
+│ • Build Docker image                    │
+│ • Trivy vulnerability scan              │
+│ • Container smoke test                  │
+│ • Push to DockerHub                     │
+└─────────────────────────────────────────┘
+```
+
+### Pipeline Stages
+
+| Stage | Tool | Purpose |
+|-------|------|---------|
+| Linting | golangci-lint | Prevents technical debt |
+| SAST | gosec, CodeQL | Detects OWASP Top 10 issues |
+| SCA | govulncheck | Identifies supply-chain risks |
+| Unit Tests | go test | Prevents regressions (75%+ coverage) |
+| Build | go build | Validates compilation |
+| Docker Build | docker | Creates container image |
+| Image Scan | Trivy | Prevents vulnerable images |
+| Smoke Test | curl | Ensures container is runnable |
+| Registry Push | DockerHub | Enables deployment |
+
+### Triggers
+
+- **Push to main**: Full CI/CD with DockerHub push
+- **Pull Request**: CI/CD without DockerHub push
+- **Manual**: workflow_dispatch
+
+## Security
+
+### Security Scanning Tools
+
+1. **gosec** - Go static security analyzer (SAST)
+2. **govulncheck** - Go vulnerability checker (SCA)
+3. **CodeQL** - GitHub's semantic code analysis
+4. **Trivy** - Container vulnerability scanner
+
+### Branch Protection
+
+- Both `CI - Build & Test` and `CD - Docker & Deploy` must pass
+- Strict mode enabled (branch must be up-to-date)
+
+## Secrets Configuration
+
+Configure these secrets in GitHub repository settings:
+
+| Secret | Purpose |
+|--------|---------|
+| `DOCKERHUB_USERNAME` | Docker registry username |
+| `DOCKERHUB_TOKEN` | Docker registry access token |
+
+**Setup Steps:**
+1. Go to [DockerHub](https://hub.docker.com) → Account Settings → Security
+2. Create Access Token with Read/Write permissions
+3. In GitHub repo: Settings → Secrets → Actions → New repository secret
+
+## Docker Image
+
+```bash
+# Pull from DockerHub
+docker pull varundeepsaini/kv-cache:latest
+
+# Run with optimizations
+docker run -d \
+  --name kv-cache \
+  -p 7171:7171 \
+  --ulimit nofile=1048576:1048576 \
+  varundeepsaini/kv-cache:latest
+```
+
+## Performance Optimizations
+
+### Kernel Tuning (Optional)
+
+For maximum performance, apply kernel optimizations:
+
+```bash
+make optimize-kernel
+```
+
+This configures:
+- TCP connection queue and backlog
+- Port reuse and TIME_WAIT handling
+- Memory buffers for high throughput
+- File descriptor limits
+
+### Docker Optimizations
+
+The `docker-up` and `docker-up-host` targets include:
+- `--ulimit nofile=1048576:1048576` - High file descriptor limit
+- `--ulimit memlock=-1:-1` - Unlimited memory locking
+- `--network=host` (optional) - Eliminates network overhead
+
+## Project Structure
+
+```
+.
+├── .github/
+│   └── workflows/
+│       ├── ci.yml          # Main CI/CD pipeline
+│       └── codeql.yml      # CodeQL security analysis
+├── main.go                 # Application source
+├── main_test.go            # Unit tests
+├── Dockerfile              # Multi-stage Docker build
+├── Makefile                # Build automation
+├── go.mod                  # Go module definition
+├── .golangci.yml           # Linter configuration
+└── README.md               # This file
+```
+
+## License
+
+MIT

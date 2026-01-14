@@ -1,0 +1,39 @@
+# golangci-lint configuration for UltraFastKVCache
+# Purpose: Enforce coding standards and catch issues early
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    # Default linters
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Report suspicious constructs
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Static analysis checks
+    - unused        # Check for unused code
+
+    # Additional quality linters
+    - gofmt         # Check formatting
+    - goimports     # Check import ordering
+    - misspell      # Check for spelling errors
+    - bodyclose     # Check HTTP response body is closed
+    - copyloopvar   # Check for loop variable capture (Go 1.22+)
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+
+  gofmt:
+    simplify: true
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

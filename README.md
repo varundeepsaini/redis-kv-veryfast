@@ -1,5 +1,8 @@
 # UltraFastKVCache
 
+[![CI/CD](https://github.com/varundeepsaini/redis-kv-veryfast/actions/workflows/ci.yml/badge.svg)](https://github.com/varundeepsaini/redis-kv-veryfast/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/varundeepsaini/redis-kv-veryfast/actions/workflows/codeql.yml/badge.svg)](https://github.com/varundeepsaini/redis-kv-veryfast/actions/workflows/codeql.yml)
+
 High-performance in-memory key-value store built with Go and fasthttp.
 
 ## Features

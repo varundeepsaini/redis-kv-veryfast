@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Binary
+kv-cache
+
+# Coverage
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+
+# Docs
+README.md
+*.pdf
+
+# CI/CD
+.github/

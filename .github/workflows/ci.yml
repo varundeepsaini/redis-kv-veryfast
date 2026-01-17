@@ -94,3 +94,14 @@ jobs:
           docker tag kv-cache:latest ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}
+
+      - name: Deploy to Kubernetes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KUBE_CONFIG != ''
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}"
+          sed -i "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/deployment.yaml
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/kv-cache --timeout=120s

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: kv-cache
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: kv-cache
@@ -27,16 +27,12 @@ spec:
               memory: "256Mi"
               cpu: "500m"
           livenessProbe:
-            httpGet:
-              path: /get?key=health
+            tcpSocket:
               port: 7171
             initialDelaySeconds: 5
             periodSeconds: 30
-            timeoutSeconds: 3
           readinessProbe:
-            httpGet:
-              path: /get?key=health
+            tcpSocket:
               port: 7171
             initialDelaySeconds: 3
             periodSeconds: 10
-            timeoutSeconds: 3

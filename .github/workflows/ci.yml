@@ -95,18 +95,16 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}
 
+      - name: Install doctl
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_API_TOKEN }}
+
       - name: Deploy to Kubernetes
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
-          if [ -z "$KUBE_CONFIG" ]; then
-            echo "KUBE_CONFIG not set, skipping deployment"
-            exit 0
-          fi
-          mkdir -p ~/.kube
-          echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
+          doctl kubernetes cluster kubeconfig save kv-cache-cluster
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}"
           sed -i "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/deployment.yaml
           kubectl apply -f k8s/

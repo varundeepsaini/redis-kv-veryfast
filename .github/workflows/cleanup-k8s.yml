@@ -1,0 +1,20 @@
+name: Cleanup K8s Cluster
+
+on:
+  schedule:
+    - cron: '0 0 17 2 *'  # Feb 17, 2026
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  delete-cluster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_API_TOKEN }}
+
+      - name: Delete K8s cluster
+        run: |
+          doctl kubernetes cluster delete kv-cache-cluster --force --dangerous
+          echo "Cluster deleted successfully"

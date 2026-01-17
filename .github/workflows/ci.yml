@@ -96,10 +96,16 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}
 
       - name: Deploy to Kubernetes
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KUBE_CONFIG != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "KUBE_CONFIG not set, skipping deployment"
+            exit 0
+          fi
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/kv-cache:${{ github.sha }}"
           sed -i "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/deployment.yaml

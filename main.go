@@ -104,6 +104,7 @@ type GetResponse struct {
 var (
 	putSuccessBytes  = []byte(`{"status":"OK","message":"Key inserted/updated successfully."}`)
 	keyNotFoundBytes = []byte(`{"status":"ERROR","message":"Key not found."}`)
+	healthOKBytes    = []byte(`{"status":"healthy"}`)
 )
 
 var cache *ShardedCache
@@ -132,6 +133,11 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 			return
 		}
 	case "GET":
+		if string(ctx.Path()) == "/health" {
+			ctx.Response.Header.Set("Content-Type", "application/json")
+			ctx.SetBody(healthOKBytes)
+			return
+		}
 		if string(ctx.Path()) == "/get" {
 			key := string(ctx.QueryArgs().Peek("key"))
 			if key == "" {

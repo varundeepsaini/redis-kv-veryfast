@@ -117,6 +117,25 @@ func TestRequestHandler_Put(t *testing.T) {
 	}
 }
 
+func TestRequestHandler_Health(t *testing.T) {
+	cache = NewShardedCache(4)
+
+	ctx := &fasthttp.RequestCtx{}
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/health")
+
+	requestHandler(ctx)
+
+	if ctx.Response.StatusCode() != 200 {
+		t.Fatalf("expected 200, got %d", ctx.Response.StatusCode())
+	}
+
+	body := string(ctx.Response.Body())
+	if body != `{"status":"healthy"}` {
+		t.Fatalf("unexpected response: %s", body)
+	}
+}
+
 func TestRequestHandler_Get(t *testing.T) {
 	cache = NewShardedCache(4)
 	cache.Put("testkey", "testvalue")
